@@ -1,77 +1,31 @@
-const express = require('express');
-const mongoose = require('mongoose');
+const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+
+const patientRoutes = require("./routes/patientRoutes");
+const encounterRoutes = require("./routes/encounterRoutes");
 
 const app = express();
+const PORT = 3000;
 
-app.use(express.json());
+app.use(bodyParser.json());
 
-mongoose.connect('mongodb://localhost:27017', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+mongoose.connect("mongodb://localhost:27017", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 });
 
 const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongooseDB connection error:'));
 
-db.once('open',() => {
-    console.log("Connected to MongoDB");
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
+db.once("open", () => {
+  console.log("Connected to MongoDB");
 });
 
-const patientSchema = new mongoose.Schema({
-    patientID: {type: String, required: true},
-    surname: {type: String, required: true},
-    otherName: {type: String, required: true},
-    gender: { type: String, required: true},
-    phoneNumber: {type: Number, required: true},
-    residentialAddress: {type: String, required: true},
-    emergencyName: {type: String, required: true},
-    contact: {type: String, required: true},
-    relationship: {type: String, required: true},
+
+app.use("/api", patientRoutes);
+app.use("/api", encounterRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
-
-const Patient = mongoose.model('Patient', patientSchema);
-
-app.post('/patient', async (req, res) => {
-    try{
-        const {
-            patientID,
-            surname,
-            otherName,
-            gender,
-            phoneNumber,
-            residentialAddress,
-            emergencyName,
-            contact,
-            relationship,
-        } = req.body;
-
-        const newPatient = new Patient({
-            patientID,
-            surname,
-            otherName,
-            gender,
-            phoneNumber,
-            residentialAddress,
-            emergencyName,
-            contact,
-            relationship,
-        });
-
-        await newPatient.save();
-
-        res.status(201).json({
-            message: 'Patient registered successfully'
-        });
-    }
-
-    catch(error) {
-        console.log("error");
-
-        res.status(500).json({message: 'Error registering patient'});
-
-    }
-});
-
-app.listen(3000, () => {
-    console.log('Server is running on port 3000');
-})
